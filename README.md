@@ -186,6 +186,132 @@ Not everyone needs a big enough payload. Use an API Gateway. Setup client specif
 
 # Microservice Design Patterns
 
+## Different types of services
+- Data Service: Connects to a data source within the system
+- Business Service: Abstraction that builds on data service. Sometimes business domains encapsulate two or more data services
+- Translation Service: Abstracts on a third party operation
+- Edge Service: Responsible for delivering data to end users
+
+## Platform: Arena for all service operations across data centers
+- Microservices do not make a system cloud native and cloud native is not only for microservices
+- Cloud Native can run anywhere
+- Cloud Native is an architecture style. Doing processing and building systems to facilitate a goal. It helps in externalizing configuration, focuses on scalability, has fast application startups and immediate shutdowns.
+- Cloud Native apps are portable and scalable where apps run as a single unit or multiple units. Allows for auto scaling up and down. Microservices break up existing endpoints into independent units of work.
+- We need both cloud native and microservices but both can exist independent of each other.
+- Use Divide and Conquer, divide problems into smaller problem statement.
+- In Microservices, we first build domain based services. In Financial Systems, we need to build decomposition model around the atomic system itself.
+
+# Types of Microservices
+- **Domain Based Microservices**
+Based on domain driven design
+We must decompose at domain level. Focus on serving the data and apply logic to the domain itself.
+What if a domain share functionality with another domain
+In domain driven design,
+1. Start with the domain model
+2. Evaluate the actions that need to perform.
+3. All of this yields the service definition itself.
+4. Consider storage of data
+5. Consider Model A with Actions A,B,C,D. All these actions are exposed as an API.
+6. Build the datastore to store the data.
+
+-  **Business Process Based Microservices**
+- Helps us build a more structured microservices architecture.
+- Business Process Domains provide higher level of abstraction built around specific business    functionality.
+-  Helps to encapsulate various domains.
+-  Business Process services have no data access of its own.
+-  But please dont build out all of business processes into a single domain package.
+-  This is like layering a monolith.
+    1. Identity the process to expose.
+    2. Identify the data domains you will need to consume
+    3. Define the APIs(contract).
+    4. Encapsulate the business process code into its own module.
+
+## What if you need atomic transactions in microservices where eventual consistency is not enough.
+- Generate ACID complaint transactions across more than one data domain.
+- Provide cross support services that supports rollbacks and callbacks.
+
+## Atomic Design Considerations
+1. Do services need to be atomic?
+2. Domains must be in shared database.
+3. Get the transactions definse, including rollback conditions
+4. Implement the service as normal with fast fail and rollback.
+5. If we can avoid atomic based services, please do.Eventual consistency is the best
+
+
+# Design Patterns
+## Strangler Pattern: Breaks down monoliths rather than writing new services.
+- We start with a monolith and shard your microservices piece by piece into new microservice endpoints.
+- We can start at data store itself and break it down.
+- We can carving functionality out of monolith and replacing it with a  microservice based artifact.
+- WE first define 2 business processes within the monolith.
+- Then define 3 distinct data access areas.
+- We need to build a new database and build our data domain. Then we move our client to move to this new domain.
+- We strangle the monolith completely from being consumed from clients and then we deprecate the monolith.
+
+## SIDECAR PATTERN: Allows offloading many operational security functions into separate functional components. These components deploy alongside the main component.
+- Deployed as a module associated with every applicable microservice in our system.
+- Removing repetitive code.
+- Logging, monitoring, networking services are offloaded to a separate module.(remember Istio Service Mesh)
+- Start with the process itself.
+- Write your code.
+- Schedule your sidecar deployment. This is done with help of service definition.
+- Sidecars are useful in containerized deployments.
+- We can add logging,monitoring and security sidecars to our services.
+- Sidecars are generic and we can apply it anywhere.
+- Sidecar reduces duplicate code
+
+## Gateway Pattern
+- Ingress Pattern for clients communicating with microservices
+- Designed to provide a buffer between underlying services and client needs
+- It can customize the payloads from the services as per client needs(remember find and replace in AzureAPIM)
+- All security and authorization logic can be put in a single ingress point.(validate-jwt)
+- Decorate payloads, customize headers
+- Perform aggregations(get data from multiple microservices and combine data) but donot apply business logic..do only simple aggregations
+- Rate Limiting
+- Gateway Patterns provide insulation as the public contract remains the same, but underlying implementations may change.
+
+**Building gateway pattern**
+- Define Contracts
+- Expose APIs in gateway component
+- Use strict version control
+- Implement Gateway
+
+## Process Aggregator Pattern
+- Simple way to develop complex process
+- When multiple domains need to be called together we use a business process service.
+- We see a frequent need to call 2 or more business processes at same time.
+- This pattern provides a single API call, which calls several business process services. This API call aggregates the response from multiple business process services
+- API call may introduce its own processing logic
+- However can cause long blocking calls
+- We need to use asynchronous calls
+**To build the aggregator**
+- Determine the business processes
+- Define the processing rules
+- Define a new model for aggregator
+- Implement API based on that model (use Standard REST verbs)
+- Wire the service together and implement the internal processing.
+
+## Edge Pattern
+- Subset of gateway pattern
+- Basic problem it solves is that API Gateway scaling becomes a concern as the different type of clients and their needs grow.
+- Client needs specialized business logic which only applies to that specific.
+- Edge patterns are client specific gateways. They docus on isolating calls for specific clients.
+- More flexible for new clients, just make a new service for each client
+- However maintenance is a concern, how many edge services will you maintain.
+- Add OAuth 2.0 to maintain security.
+
+ **Build the Edge Pattern**
+ - Identify the needs and constraints of the client
+ - Build Contracts
+ - Implement API and contracts
+ - Maintain passivity as long as client is needed.
+
+**SCALING IS EASIER IN EDGE PATTERN AS WE KNOW WHEN THE CLIENT NEEDS GROW AND WHEN THEY COME DOWN**
+ 
+
+
+
+
 
 
 
