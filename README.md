@@ -184,6 +184,8 @@ Not everyone needs a big enough payload. Use an API Gateway. Setup client specif
  - Encapsulate as many of potential services as possible
  - Keep a scalable and distributable system in mind every step of the way.
 
+# Microservice Design Patterns
+
 
 
 
