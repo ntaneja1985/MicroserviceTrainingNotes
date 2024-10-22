@@ -307,7 +307,107 @@ In domain driven design,
  - Maintain passivity as long as client is needed.
 
 **SCALING IS EASIER IN EDGE PATTERN AS WE KNOW WHEN THE CLIENT NEEDS GROW AND WHEN THEY COME DOWN**
- 
+
+# Data Patterns in Microservices
+
+## SINGLE SERVICE SINGLE DATABASE PATTERN
+- Problem it solves is that scalability needs between database and service are related. If load on a service increases, it will also increase load on underlying database
+- Each data domain gets its own dedicated datastore.
+- As we scale the service, we need to scale the database also
+
+## SHARED DATABASE PATTERN
+- 2 or more services use the same database.
+- Data distribution should be handled by database.
+- Structure data to isolate it and prepare for eventual separation
+- Each service that consumes the service should have unique credentials.
+- Data domain should connect to a single schema.
+- Useful for startups, as we can focus on new features. Also useful if you want to break the database up at a later point in time.
+
+## CQRS Pattern
+- Those who get it well can make their lives easy
+- Data access patterns diverge from traditional CRUD to more complex multi-model patterns
+- Query interfaces may transform and aggregate the schema to represent the model.
+- We make Task build UI operations
+- Eventual Consistency is the target. We cannot guarantee that the data you write is the data you read.
+
+## ASYNCHRONOUS EVENTING PATTERN
+- Sometimes long running transactions or complex workflows cannot fit into a single blocking API call
+- A service API triggers an event
+- Event can cascade asynchronously
+- This is powerful in a distributed system
+
+## OPERATIONAL PATTERNS
+
+### LOG AGGREGATION PATTERN
+- Need to know what is going on with our system
+- Logs Provide detailed information about microservices
+- Logging must be consistent across all services
+- Consistency across services is critical in structure and format.
+- Make efforts to make logs consistent.
+- Must inject tracing identifier across different service calls
+
+With microservices we must store our logs in a centralized database(ELK Stack)
+Must make efforts to do structured logging, easier to parse and search and easier to find out and fix issues
+
+###  METRICS AGGREGATION PATTERN
+- More useful than logging
+- Less human interaction, just some instrumentation
+- See what is going on with the system as a whole
+- We can view metrics graphically on Dashboards (Application Insights, Azure Monitor)
+- Build high level dashboards.
+- Build detailed dashboards for each service.
+- Inject events especially deployments into the dashboard.
+- Trace alarms on your graphs
+
+### Tracing Patterns
+- We need them because in a monolithic system all calls from edge to database are in a single process. We can dump the stacktrace
+- However in a microservices based architecture, we cant just do that. So we need to inject tracing identifier. We should track everything to database calls or any dependent service calls with it.
+- Must use standards based approach
+- Inject Trace ID at entry point of your system
+- Every log message should embed the trace ID
+- Put it in the Header
+- Visualize the call stacks
+
+### External Configurations
+- Must write configurations outside of code
+- Kubernetes have ways to inject configMap into the app
+- Consistent naming is very useful
+- Must try to expose configuration as much as possible but protect secrets
+- Service written to favor embedded values
+
+### SERVICE DISCOVERY
+- Save time in a dynamic runtime
+- Problem: What service i need to call?
+- As each service comes online it advertises what contracts it exposes
+- We can query the central location to find the services we want.
+- Client can call Service URI from discovery not from config
+- Consul, Eureka
+- Netflix has exposed components for service discovery
+
+### CONTINUOUS DELIVERY
+- Process by which we deliver new code to production with full automation
+- Move code from non production to production using gates
+Steps:
+1. Trigger code to move after artifact has published
+2. Automate integration tests
+3. Deploy integration test suites along with the tests(SonarQube)
+4. Add Security Testing(third party tools) Penetration Testing framework is run then internal security tests is run. OWASP top 10 and Synk Security Tool
+5. User Acceptance Testing
+6. Do smoke tests in production
+7. CI/CD is a basic requirement of microservices
+
+### DOCUMENTATION
+- It is critical. Having solid documentation for APIs is important.
+- For Restful services use OpenAPI to document contracts
+- C# has built in support for OpenAPI
+- Expose documentation as a consistent location (/docs) swagger docs
+- Populate central documentation repository
+- Include examples of API Consumption (remember Developer Portal, SwaggerJSON)
+- Improves reuse of code and ensures code is well discussed
+
+# MICROSERVICES SECURITY
+
+
 
 
 
