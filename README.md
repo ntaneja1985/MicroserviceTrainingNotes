@@ -162,10 +162,10 @@
 # Considerations while building microservices
 - Business Layer allows us to use Message Brokers
 - API Layer should only be used as a proxy layer. Cannot transform service offerings based on client needs
-- 2 types of Edge Services
+- Two types of Edge Services
   1. **Outbound Edge Service**-->Expose client specific needs to outside world
 Not everyone needs a big enough payload. Use an API Gateway. Setup client specific edge services. It makes the transformations easy. Provides clients a consistent interface.
-  2.**Inbound or Translation Service** --> Design to abstract us from third party dependencies.
+  2. **Inbound or Translation Service** --> Design to abstract us from third party dependencies.
 - Consider an email marketing service
   1. Use a third party service for emails and SMTP operations
   2. Build an edge service  which interacts with third party service, this abstracts ourself from vendor implementation. We can replace vendor also
