@@ -519,6 +519,110 @@ This really helps us to establish user context across microservices.
 - Transport everything over TLS. Tokens should be protected like passwords. Same sort of protection must be for client ID and client secret. Always set an expiration date. Dont include highly sensitive info in payload of token
 
 # Security Between Microservices
+- Communication between microservices must be based on mutual TLS (mTLS)
+- Use the concept of zero trust. Trust boundary should be the microservice itself
+- Digital Certificates should be used. It identifies the identity, the public key and Certificate Authority. Certificates should be exchanged.They should be validated against Certificate Authorities.
+-  SSL certificate verifies the identity of the site.Any info that is sent is not in clear text. 
+- In microservices we take concept of security to another level by implementing mTLS. Both parties authenticate using a digital certificate issued by a CA before a secure channel is established(remember GRPC)
+- In Mutual TLS, each microservice is deployed with a certificate and a private and public key pair that allows them to identify each other.
+- Use mTLS to secure communication between API Gateway and Microservice.
+- **Biggest challenge of implementing mTLS is management and provisioning of certificates.**
+- Most services are hosted inside a container.
+- How certificates are handled before they expire. This is done with container orchestrators and service meshes.
+
+### How to secure traffic between microservices(EAST-WEST Traffic)
+- Microservices consume other microservices.
+- We cannot use the same pattern used to validate access to service 1 also be used to validate to service 2. This is an anti pattern and is like a distributed monolith and causes tight coupling and violates concept of least privilege.
+- Service 1 can do client credentials flow to get an access token to talk to Service 2. However this is not ideal, now Service 2 doesnt have knowledge of the original user who issued request to Service 1. (Use Delegating Handler in .NET)
+- We can nest one token inside another when calling service 2 from service 1. This is called Token Switch pattern.
+- To secure communication between microservices do these steps
+  1.  Make sure the client uses a reference token
+  2.  When token enters the network, use the IAM to switch the reference token for a structured token with claims of the user.This          can happen at the API Gateway.
+  3.  Now microservices can securely communicate without storing any state between them. 
+
+## Logging and Tracing between Microservices
+- Logs can show suspicious behaviour.
+- Can establish audit trails
+- We can use correlation ID with each request
+- We can reassemble the event at a later point of time to support a security inquiry.
+- Common Logging structure must be included.
+- All errors must be logged along with debug information.
+- Send all logs to a central host (LogStash)
+- Use Elastic Search and Kibana.
+- Automated monitoring can generate alerts as well.
+
+# Usage of Service Mesh to secure communication between microservices residing inside a container
+- Service Mesh is used to manage the complexity of service to service communication
+- Prerequisites:
+  1. Microservices must run inside containers with docker
+  2. Must be deployed in Container Orchestration System like Kubernetes
+- Build a security mesh which is a network of proxies that sit next to container(sidecar proxy). These proxies intercept the traffic entering and exiting the microservice providing an excellent point to apply security tactics like mTLS, Access Policies and Audit Logging.
+- With many interconnected microservies, we establish a mesh of proxies(service mesh)
+- Mesh is transparent to microservices
+- Mesh intercepts the traffic between them
+- **Istio by Google** splits into a data plane and control plane.
+-  Data plane contains the set of proxies and policy and configuration is managed by control plane.
+-  Using pilot the control plane can push it to data plane and enforce authorization or claims in JWT  passed to microservice.
+- We can create policy to secure our microservices.
+- Istio allows better monitoring and improve observability by using TraceID and RequestID.
+-  Istio also has access logging of its own.
+-  **Istio provides mTLS out of the box.**
+-  It bundles a Certification Authority Citadel into control plane.
+-  It can mount certificate header and key inside a kubernetes pod when it is created.It can also automate rotate the certificates inside the pod.
+-  Istio Mesh secures our microservices and improves logging.
+
+# Application and Container Security
+
+## Throttling and Rate Limiting
+- Controls usage of API Clients. Limits traffic to avoid complete outages.
+- Think of it like a speed limit for APIs.
+- Create a quota and rate limit for each client. Rate Limit prevents bursts of calls. For APIs that are monetized we can set the quota accordingly.
+- We can also limit by user(Remember Limiting by Subscriber ID in Azure APIM).
+- We can apply throttling limits for some operations which are resource extensive.
+## Container Security
+- Microservices are deployed inside containers. Security measures can be applied on container runtime.
+- Must remove non essential applications inside a container.
+- Configure container to run with least amount of privileges necessary.
+- Never run container using the -privileged flag.
+- Running container using read only file system and volumes is a great way to reduce attack radius.
+- Docker Bench can check for security misconfigurations.
+## Container Image Security
+- Images are built from Dockerfile.
+- Images are stored in container registry where it can be pulled and run as a container.
+- Always pull the image from a trusted source.
+- It is possible to insert malicious code inside a Dockerfile image
+- Must use the image's latest version.
+- Providers of images regularly update them.
+- Snyk tool can detect security vunerabilities related to an image.
+## Secrets Management
+- Kubernetes provide better approaches to store secrets. It has built in secrets management store.
+- Secrets can be injected as an environment variable or we can write a file to a volume.
+- However now we cannot share secrets outside of microservice cluster.
+- Best option use Azure Key Vault
+## Pipeline Security
+- Pipeline is a function which accepts commits from developer as input and outputs a container which contains the software the commit was made against.
+- We can introduce security gates inside the pipeline.
+- Use Static Code Analysis tools like SonarQube which can alert about security issues.
+- SonarQube must run on CI Build.
+- Ensure a PULL Request Model in place.
+- Snyk can integrate directly into our pull request.
+- Run Unit and Integration Tests
+- Inject some interactive security testing.
+- Use Container Registry Scanner.
+- Access to artifact repository must be closely guarded.
+
+# Asynchronous Messaging in Microservices
+
+
+
+
+
+
+
+
+
+
+
 
 
 
