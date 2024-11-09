@@ -407,6 +407,127 @@ Steps:
 
 # MICROSERVICES SECURITY
 
+- In a monolith all services communicate in-process whereas in microservices all communication occurs over HTTP. Access to microservices occurs through REST API.
+-  For Fault Tolerance, we have Circuit Breaker Pattern in Microservices. E.g Polly
+
+## Security Fundamentals
+- Confidentiality -->Ensures information is private
+- Integrity -->Ensure information can be trusted
+- Availability -->Ensures information can be available to authenticated users when they need it.
+
+### Access Control: : Authentication and Authorization
+- Authentication-->Establishes user identity (user or machine). Highly sensitive systems may apply multi-factor authentication like OTP or password
+- Authorization-->Identification and enforcement of privileges (May be delegated to 3rd Parties through OAuth)
+
+## Attack Surface: Ports, APIs,DB (all are vunerable)
+- In a monolith, the attack surface is limited. Requests entering the system go through a security filter. Security Context is shared across all components. All components share the same trust domain in monolith.
+- Distributed systems are made of independent components. Each component or microservice has a port. So we have a wide attack surface and it is dynamic in nature. Access Control is a challenge.
+- Building authentication within each service is very challenging. One microservice calling another microservice would have to revalidate each call.
+- EAST-WEST TRAFFIC-->Traffic between microservices
+- NORTH-SOUTH TRAFFIC -->Traffic entering the system
+- Need to ensure confidentiality of traffic between various services. For e.g a DDOS attack on one service would affect only that service. All other services can work normally. This is a security advantage.
+
+## Access Management Patterns
+- Token: Digital Keys(GUIDs or detailed info tokens) like JWT Token. Identity Service manages the authentication and issues tokens
+- Services call Identity Service with the token to verify its authenticity. It can cause lot of service traffic to the identity service. One solution to reduce this traffic is to route it to a reverse proxy. The reverse proxy will talk to Identity Service and then validate the token and allow access to the microservice, but this also has challenges. However, implicitly trusting the network is also not good.
+- Now the token from the Identity Service will pass the identity and privileges to the microservices. These service will check these privileges and provide access accordingly.
+
+## What do Identity Services really provide?
+- Identity Services provide 2 main classes of services: Authentication and Token Management.
+- Best way is to outsource the identity services.
+- Azure AD also supports MFA Authentication like OTP or biometrics. It also provides identity management.Users can also delegate permissions. We have OAuth2.0, JWT, Open ID Connection(OIDC)
+
+## Reverse Proxy or API Gateway
+- Single Entry Point of Access.
+- These Gateways validate the client token by checking it with Identity Platform.
+- We can also enforce access control in gateway.
+- We can also do rate limiting where one client has limited access (429 error code). Too many requests received.
+- We can also do request tracing and performance monitoring.
+- API monetization
+- API Gateways come with Developer Portals.It can integrate with Identity Providers. We need to register our subscribers.
+- API Gateways can be onprem or on the cloud.
+
+### Microservice Access Scenarios
+- Microservices are not accessed by end users.
+- All calls come from API Gateway
+- Clients can be public clients like SPA(credentials can be accessed by attacker) or confidential clients(server side apps)
+- An endpoint can also request access to the microservice.
+- Microservices must support machine to machine access scenarios such as Client Credentials flow.
+
+### Types of Tokens
+- Reference Token: Reference Token is an opaque string that doesnt contain any meaningful data. It is passed into a request and used to look up for token metadata in a repository in IAM platform.
+- Structured Token: Structured token contain the token and the claims which are grouped together in a claim set.
+- JWT Tokens has 3 parts(Header,Payload and Signature)
+- ACCESS TOKENS: Allow the bearer of token to access an API
+- REFRESH TOKEN: Allows new access token to be obtained after original has expired.
+- ID Token: JWT Token contain information about authentication event and user identity.
+
+All tokens have a lifecycle. Tokens are difficult to manage.
+
+## OAuth2.0
+- We have the following actors:
+1. Resource Owners(end user who owns the info in a microservice)
+2. Resource Server(server hosting the API)
+3.  Authorization Server(issues Access Token to client)
+4. Client is an application that access resources on behalf of an owner
+
+Clients call the Authorization Server and uses the Access Token to access the resource server.(Hotel Scenario getting the keycard access to the room)
+
+## Types of GRANTS
+- GRANTS are the sequence of steps taken to issue an access token to a client
+- It outlines the HTTP calls and parameters exchanged among client, resource owner and auth server
+- Client specifies the scope of access request
+- Biggest advantage is that the microservice doesnot have to handle authentication
+- We have the following GRANT Types:
+  1. Authorization Code Flow
+  2. Client Credentials Flow
+  3. Implicit Flow
+  4. Resource Owner credentials
+
+### Authorization Code Flow
+- Client and its redirect URI must be registered with authorization server.Registration is done using registration form in developer portal. Once form is completed a clientID and clientsecret are issued
+
+### Client Credentials Flow
+- Used to get token for machine to machine scenarios. Client ID and secret and their grant type is passed to auth server. It receives a token.
+
+### Open ID Connect
+- It is a thin identity layer that sits on top of OAuth.OIDC Providers are linkedin, microsoft,google etc.Identity Providers can also authenticate users to authenticate applications. Basically its an authorization server that meets OIDC Standards. They expose the following endpoints:
+- /authorize
+- /token
+- /userinfo -->returns claims about authenticated users
+
+OIDC issues an ID Token and Access Token. ID Token also includes claims about the user. Access Token can be passed to userinfo endpoint to receive claims about the end user
+
+#### Steps in a OIDC Flow
+ 1. Make a request to the identity provider(Google,LinkedIn)
+ 2. After authentication, a code is returned to the client
+ 3. Client can exchange that code for ID Token and Access Token
+ 4. Call the authorization server and pass that code
+ 5. Get back an access token and ID Token(starts with EYJ..thats a JWT)
+ 6. ID Token has claims about end user.
+
+This really helps us to establish user context across microservices.
+
+### Considerations to be kept in mind for a Token
+- Tokens must be validated
+- Token is held by the client between requests and it is passed to resource server with each request.
+- Validation depends on type of token. If it is a reference token, send it to auth server to learn more about the state of token or if its valid or not .Auth Server must have clustering and caching in place to handle heavy loads. 
+- In JWT.IO we can validate the token with help of a key(symmetric key in our case) and check if the signature is verified corresponding to that key. All JSON Web Tokens correspond to the JOSE specifications.
+- Each token has an expiration date. This is set through expiresIn claim in JWT. JWT Token should be short lived.
+- For long lived scenarios use a Refresh Token. Every time an access token is obtained using a refresh token, refresh tokens should be rotated.
+- When a logout occurs all tokens should be revoked. We also have an endpoint through which a token can be revoked.
+- Transport everything over TLS. Tokens should be protected like passwords. Same sort of protection must be for client ID and client secret. Always set an expiration date. Dont include highly sensitive info in payload of token
+
+# Security Between Microservices
+
+
+
+
+
+
+
+
+
 
 
 
