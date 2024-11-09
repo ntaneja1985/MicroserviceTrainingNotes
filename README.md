@@ -643,9 +643,17 @@ In most microservices, response is not needed immediately. We aim for eventual c
 ## Cons of Asynchronous Messaging
 - Complexity by artifact sprawls.
 - Disconnected Code Paths
+- Makes debugging, troubleshooting more complex
+- More complexity in fanouts
+- Observability complexity also increases(more important to log correlation IDs)
+- Have to inspect logs and logging is very important.
+- Correlation of metrics is also a challenge
+- Additional components and each new component adds overhead
+- Have more containers running which also increases cost
+- Sometimes finding source of issue is very complex. Root cause is tough to find.
+- Tracing issues through callstack is much harder.
 
-
-
+## Message Broker
 
 
 
