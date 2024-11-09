@@ -654,9 +654,228 @@ In most microservices, response is not needed immediately. We aim for eventual c
 - Tracing issues through callstack is much harder.
 
 ## Message Broker
+- It is at the heart of asynchronous communication
+- Does Translations
+- Routing
+- Aggregations
+- Errors(Dead Letter Queues)
+
+Common Message Brokers:
+1. RabbitMQ
+2. JMS
+3. Apache Kafka
+4. Redis Cache(Not the best)
+
+**PRODUCER**: Creates the message and dispatches to message broker
+**CONSUMER**:  System that receives the message but can also be a producer for another message downstream.
+**Dead letter Queue**: Here the error messages go.
+
+## Interservice Communication Patterns
+- Point to Point (Single Producer and Single Consumer)-->This is send and forget. Responses are also point to point
+- Publish Subscribe(Single Producer but more subscribers who listen for messages). Multiple consumers of same message. This is also send and forget.
+- Durable Subscriptions(If subscriber is durable, there is a guarantee of atleast once delivery)
+
+### POINT TO POINT MICROSERVICE COMMUNICATION (Most Common)
+- No response is needed, client doesnt need to know response, we can produce a message and fire it off
+- Useful for audit records which are not mission critical
+- No guarantees or whether it is done with proper manner
+- Easy to Scale
+Examples include:
+  1. Admin Tasks in application
+  2. Sending Emails
+
+PRODUCER -->MESSAGE BROKER -->CONSUMER
+There will be a DLQ in this case also, we need to monitor this queue.
+
+### PUBLISH SUBSCRIBE MICROSERVICE COMMUNICATION
+- Examples include
+   1. Multiple Responders
+   2. Triggers to search multiple search indices
+   3. Multiple Tasks
+
+Consumers can decide which messages they can listen for.(Apply filtering)
+
+### DURABLE SUBSCRIBERS MICROSERVICES COMMUNICATION
+- Always get the messages
+- Subscriber has to acknowledge it
+- Powerful in mission-critical operations
+- Can allow nothing to be blocked yet each message is guaranteed to be processed.
+- Subscribers can unregister also
+- Done in Producer Agnostic way
+  PRODUCER--->MESSAGE BROKER--->Subscriber 1
+                |
+                |
+               \|/
+           Subscriber 2
+
+  ## EVENT DRIVEN MICROSERVICES
+  - Series of Steps
+  - Triggered from a single event
+  - There is a check to ensure all dependent components are working fine
+  - Move towards an end goal
+  - Each piece has a role to play
+ 
+  ### Choreographed Events
+  - There is a call tree
+  - Each step does some work and passes work down the chain
+  - Cascade down the pipelines(similar to MongoDb integration pipelines)
+
+  ### Orchestrated Events
+  - Examples include
+      1. Sequential Processing(like user registration or loan approval process)
+      2. Command Workflows(Dispatch events to worker process and sends response message, then we can dispatch another message) For             e.g setting up Kubernetes multi-cluster
+      3. Response Required (Can create aggregate of responses)
+  - Pros
+     1. Increased Reliability
+     2. Better error handling
+     3. Better observability
+  - Cons
+     1. More expensive
+     2. Decreased Performance(Everything has to go through orchestrator)
+  - Very common
+  - Centralized command and control
+  - We can invoke the steps as we need to
+  - We poll for results
+  - Still based on isolated steps and each step is distinct and each step has a job to do
+
+  Event Producer(Polls the orchestrator for response)
+    |
+    |
+   \|/
+Orchestrator -->Message Broker--->Step
+                     |
+                     |
+                    \|/
+                    Step
+
+  ### Choreographed Events
+  - Initializer of event is the choreographer
+  - Use cases include:
+      1. When we have different systems in play
+      2. When we have silos of teams
+      3. Alternative cascades (Each step has results that trigger more than one next step)
+  - Benefits
+      1. Increased performance
+      2. Reduced Cost
+  - Cons
+      1. Reduced Reliability
+      2. No centralized orchestrator(makes logging difficult and traceability)
+      3. Reduced observability
+
+  Event Producer(Choreographer-creator of message) -->Message Broker-->Step
+                                       |
+                                       |
+                                      \|/
+                                      Step
+
+   
+### Hybrid Event Driven System
+- Centralized command and control
+- Remote choreography
+- Work gets done
+- Contracts via message broker is the key
+- We need to have well documented contracts
+- Contracts must be passive to change
+- Read the contract and honor it
+- If there is a breaking change, send it to DLQ.
+
+### Stream Data Platform
+- It handles streams of data comes from structured log messages
+- Increased need for disk space
+- Activity is handled asynchronously
+- Very useful in microservices
+- Similar to pub/sub model
+- **Producers**: Applications produce logs, producers of the messages, Databases can also produce logs and events, Servers also produce logs, Everything else that produces messages and logs
+- **Consumers**: Log Aggregators(LogStash), Correlation and Tracing IDs help the Log aggregators
+- **Analytics Engine**: Long term storage vehicles like Data Lakes, Eventing Engines(trigger downstream events)
+- **Log Aggregation**: Message Broker can aggregate logs from different systems, Keep all logs in original format, Readability of log messages, Consumption Engine
+
+**ELK Stack** is the best one for this
+- Can handle real time log aggregation
+- We can visualize the stream of events
+- Trigger Alerts
+- Create Alerts
+- Useful in debugging
+- Log visualization can also help in refactoring
+
+Stream Data Platforms read from all environments and not just production
+#### System Analytics
+- Stream Data Platform is the best place to do analytics(gRPC)
+- Allows data to be analyzed quickly (Apache Spark)
+- Quicker Responses and dashboards can be built quickly
+- Analytics should be built within microservices but the company must invest in it
+- Value isnt immediate
+- Return on investment takes time
+- Need to do event detection and analysis to stop malicious attacks
+- It is also useful to identity patterns
+
+Producer                                            Consumer
+Producer        Persistent Message Broker(Kafka)    Consumer
+Producer                                            Consumer
+Producer                                            Consumer
+
+### Data Flows in Microservices
+- Can range from distributed data and eventual consistency to CQRS based data rights to improve throughput.
+- Data is slow(Reading,writing of data are all slow processes)
+- Data is critical to operation of any system
+- Need to store state
+- Data grows daily
+- We need more data to be effective(Data is the new Oil)
+- ACID is painful in a microservices world
+- BAS: Basically Available (Eventual Consistency) (S)Data is soft and malleable
+- Apache Cassandra achieves eventual consistency
+- We need BAS in planet scale databases
+- Cons of Eventual Consistency:
+   1. Latent Reads
+   2. Communication Faults
+   3. Catastrophic Failure
+- Must allow fallback reads and load balance globally.
+- Must build in fault tolerance in microservices (Circuit Breaker Pattern)
+
+### Why CQRS is useful in microservices
+- Data Services have a specific function
+- Operate on a single data domain
+- Optimized for efficiencies
+- Writes are expensive
+- Reads are not immediate or cheap
+
+CQRS is a model that describes written data in a different model than reading the data.
+It segregates writes from reads. It is event driven but it is not a replacement for CRUD Operations
+UPDATE SERVICE-->UPDATE DATABASE    ---> 
+                                          Message broker
+READ SERVICE---->READ DATABASE      --->
+
+READ DATABASE IS NOT ALWAYS CONSISTENT WITH UPDATE DATABASE
+
+#### Data Migration
+- Use asynchronous messaging
+- Move data from a big database to a more focused database
+- Core part of microservices migration
+- We have to transform data also
+- Writes are critical and need to be captured
+- Reads do more than just read(may transform data)
+- Syncing of data is hard but migration time also must be optimized
+- Consider an original service and original database. The original service sends a write to original database. It also activates a trigger that calls a Producer Service. The Producer Service puts a message inside a message broker that a database write action came in. The Consumer service will read that message and then call the original database to get the data. The Consumer Service will talk to the New Service and transform the data.The New Service will then write data to the New Database
+- A Crawler can also be used to check if the migration has completed between original database and new database.
+- We have to understand why we need to synchronize data
+- We have different databases
+- Need to keep databases in sync
+- We have different systems for e.g analytics and original database(ETL)
+- Lot of overhead to keep data in sync and if it keeps in sync
+
+SOURCE --->MESSAGE BROKER --->DESTINATION
+         WATCHER(Ensure the DBs are in sync)
 
 
 
+
+
+
+
+
+
+
+  
 
 
 
