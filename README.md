@@ -612,8 +612,37 @@ This really helps us to establish user context across microservices.
 - Access to artifact repository must be closely guarded.
 
 # Asynchronous Messaging in Microservices
+-  Communication between microservices can be through asynchronous messaging.
+-  Most often done through messaging.
+-  Main Asynchronous communication is done over:
+   1. HTTP over REST
+   2. Polling or Push
+   3. Messaging Systems
+   4. Drop a message and move on
+- In a standard model, communication between microservices is over HTTP using RESTFUL patterns.Calls are synchronous in nature.ach      call becomes a blocking call and has to wait for response. Call paths can be deep. Useful in small operations but complicated in      multi service communication.
+- While implementing Asynchronous Communication, all communication is over HTTP over REST. Server has to poll to check the status.
 
+## Benefits of Asynchronous Communications
+- Offload Strain
+- No impact to customer
+- Improve user experience
+- Improve system health
+- Can have retries without affecting performance
+- Prevent Gridlocks
+- Avoid congestion of network
+- Avoid slowness and cascading slowness
+- Can have long running processes
+- Avoid timeouts
+- Reduce Coupling
+- Communication is only through contract of the message
+- Improves fault tolerance
+- No more message blocking or timeouts
 
+In most microservices, response is not needed immediately. We aim for eventual consistency.
+
+## Cons of Asynchronous Messaging
+- Complexity by artifact sprawls.
+- Disconnected Code Paths
 
 
 
